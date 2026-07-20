@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChatGPT Edu — школы и детские сады Казахстана</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#f3f5f8;--card:#fff;--ink:#1c2b3a;--muted:#647180;--line:#e1e7ee;
+  --navy:#16324f;--accent:#1a73c9;--good:#1e9e63;--mid:#e08a2e;--bad:#d64545;
+  --shadow:0 4px 18px rgba(22,50,79,.08)
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink)}
+.wrap{max-width:1200px;margin:0 auto;padding:22px 18px 60px}
+.top{background:var(--navy);color:#fff;padding:22px 26px;border-radius:14px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:var(--shadow)}
+.top h1{margin:0;font-size:22px}.top p{margin:7px 0 0;opacity:.85;font-size:13px}
+.actions{display:flex;gap:10px;align-items:center}
+button{cursor:pointer;border:0;border-radius:8px;font-weight:700}
+.reload{background:rgba(255,255,255,.15);color:#fff;padding:9px 14px}
+.lang{display:flex;background:rgba(255,255,255,.12);padding:4px;border-radius:9px}
+.lang button{background:transparent;color:#fff;padding:8px 13px}
+.lang button.active{background:#fff;color:var(--navy)}
+.breadcrumb{margin-top:16px;font-size:13px;color:var(--muted)}
+.breadcrumb button{background:none;color:var(--accent);padding:0;font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-top:16px}
+.kpi,.card{background:var(--card);border-radius:12px;box-shadow:var(--shadow)}
+.kpi{padding:17px;border-top:4px solid var(--accent)}
+.kpi .v{font-size:28px;font-weight:800}
+.kpi .l{font-size:12.5px;color:var(--muted);margin-top:5px}
+.card{padding:19px;margin-top:18px}
+.card h2{margin:0 0 5px;color:var(--navy);font-size:17px}
+.hint{margin:0 0 14px;color:var(--muted);font-size:12.5px}
+.chartbox{height:420px;position:relative}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+input,select{padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;background:#fff;color:var(--ink)}
+input{flex:1;min-width:220px}select{min-width:170px}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;min-width:980px;font-size:13px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left}
+th{background:#f7f9fc;color:var(--muted);font-size:12px;cursor:pointer;position:sticky;top:0}
+td.num,th.num{text-align:right}
+td.name{font-weight:600;white-space:normal;min-width:300px}
+tr:hover td{background:#f8fafc}
+.linkbtn{background:none;color:var(--accent);padding:0;text-align:left}
+.badge{display:inline-block;color:#fff;padding:4px 8px;border-radius:6px;font-weight:700;font-size:11.5px;white-space:nowrap}
+.loading{padding:60px;text-align:center;color:var(--muted)}
+.err{background:#fff0f0;border:1px solid #efc2c2;color:#7c2f2f;padding:16px;border-radius:10px}
+.updated{margin-top:18px;text-align:center;color:var(--muted);font-size:11.5px}
+@media(max-width:850px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}.wrap{padding:12px 10px 40px}.top{padding:16px}.top h1{font-size:18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1 id="title"></h1>
+      <p id="subtitle"></p>
+    </div>
+    <div class="actions">
+      <button class="reload" onclick="loadData()">⟳</button>
+      <div class="lang">
+        <button id="kzBtn" onclick="setLang('kz')">ҚАЗ</button>
+        <button id="ruBtn" class="active" onclick="setLang('ru')">РУС</button>
+      </div>
+    </div>
+  </header>
+  <div id="app"><div class="loading">Загрузка данных…</div></div>
+</div>
+
+<script>
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vSDrccbs1chrR8dXBjOc1eMA3vIKclVIHCjted-_itgYDFUA7QBvTzu76CV7TuUFaMXWikIxKJa37m9/pub?gid=1899398267&single=true&output=csv";
+
+const TXT={
+  ru:{
+    title:"ChatGPT Edu в школах и детских садах Казахстана",
+    subtitle:"Активация лицензий по регионам, районам и организациям образования",
+    loading:"Загрузка данных…",country:"Казахстан",institutions:"Учреждений",
+    issued:"Выдано лицензий",completed:"Завершили вводный модуль",activated:"Активировали лицензии",
+    rate:"Процент активации",regions:"Регионы",districts:"Районы",organizations:"Учреждения",
+    regionRanking:"Рейтинг регионов",districtRanking:"Рейтинг районов",
+    search:"Поиск учреждения…",allTypes:"Все типы",schools:"Школы",kindergartens:"Детсады",
+    region:"Регион",district:"Район",type:"Тип",institution:"Учреждение",
+    status:"Статус",excellent:"Отлично",ontrack:"По плану",early:"Начальный этап",attention:"Требует внимания",
+    updated:"Последнее обновление",noData:"Данные не найдены"
+  },
+  kz:{
+    title:"ChatGPT Edu — Қазақстан мектептері мен балабақшаларында",
+    subtitle:"Өңірлер, аудандар және білім беру ұйымдары бойынша лицензияларды белсендіру",
+    loading:"Деректер жүктелуде…",country:"Қазақстан",institutions:"Ұйымдар",
+    issued:"Берілген лицензиялар",completed:"Кіріспе модульді аяқтады",activated:"Лицензияны белсендірді",
+    rate:"Белсендіру пайызы",regions:"Өңірлер",districts:"Аудандар",organizations:"Ұйымдар",
+    regionRanking:"Өңірлер рейтингі",districtRanking:"Аудандар рейтингі",
+    search:"Ұйымды іздеу…",allTypes:"Барлық түрі",schools:"Мектептер",kindergartens:"Балабақшалар",
+    region:"Өңір",district:"Аудан",type:"Түрі",institution:"Ұйым",
+    status:"Мәртебе",excellent:"Өте жақсы",ontrack:"Жоспар бойынша",early:"Бастапқы кезең",attention:"Назар қажет",
+    updated:"Соңғы жаңарту",noData:"Деректер табылмады"
+  }
+};
+
+let LANG="ru";
+let DATA=[];
+let view={level:"country",region:null,district:null};
+let chart=null;
+let sortKey="rate";
+let sortDir=-1;
+
+function t(k){return TXT[LANG][k]||k}
+function fmt(n){return Number(n||0).toLocaleString(LANG==="kz"?"kk-KZ":"ru-RU")}
+function pct(n){return (Number(n||0)*100).toFixed(1)+"%"}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function norm(s){return String(s||"").trim().toLowerCase()}
+function num(s){
+  const cleaned=String(s??"").replace(/\s/g,"").replace(",",".").replace(/[^0-9.\-]/g,"");
+  const v=parseFloat(cleaned);
+  return isNaN(v)?0:v;
+}
+
+function parseCSV(text){
+  const rows=[];let row=[],cur="",quoted=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(quoted){
+      if(ch==='"'){
+        if(text[i+1]==='"'){cur+='"';i++}else quoted=false;
+      }else cur+=ch;
+    }else{
+      if(ch==='"')quoted=true;
+      else if(ch===','){row.push(cur);cur=""}
+      else if(ch==='\n'){row.push(cur);rows.push(row);row=[];cur=""}
+      else if(ch!=='\r')cur+=ch;
+    }
+  }
+  if(cur.length||row.length){row.push(cur);rows.push(row)}
+  return rows;
+}
+
+function buildData(rows){
+  if(!rows.length)return [];
+  const h=rows[0].map(norm);
+  const find=words=>h.findIndex(x=>words.some(w=>x.includes(w)));
+
+  const iRegion=find(["регион","область","өңір"]);
+  const iType=find(["тип","түр"]);
+  const iDistrict=find(["район","аудан"]);
+  const iName=find(["учреждение","наименование","организация","ұйым"]);
+  const iIssued=find(["выдано лицензий","начали вводный","берілген лиценз"]);
+  const iCompleted=find(["завершили","аяқтады"]);
+  const iActivated=find(["активировано","активировали","белсендір"]);
+  const iDate=find(["дата обновления","жаңарту"]);
+
+  return rows.slice(1)
+    .filter(r=>r.some(x=>String(x).trim()))
+    .map((r,idx)=>{
+      const issued=num(r[iIssued]);
+      const completed=num(r[iCompleted]);
+      const activated=num(r[iActivated]);
+      return {
+        id:idx+1,
+        region:(r[iRegion]||"").trim(),
+        type:(r[iType]||"").trim(),
+        district:(r[iDistrict]||"").trim(),
+        name:(r[iName]||"").trim(),
+        issued,completed,activated,
+        rate:issued?activated/issued:0,
+        date:iDate>=0?(r[iDate]||"").trim():""
+      };
+    })
+    .filter(r=>r.region&&r.name);
+}
+
+function aggregate(rows,key){
+  const map=new Map();
+  rows.forEach(r=>{
+    const k=r[key]||"—";
+    if(!map.has(k))map.set(k,{name:k,issued:0,completed:0,activated:0,count:0});
+    const x=map.get(k);
+    x.issued+=r.issued;
+    x.completed+=r.completed;
+    x.activated+=r.activated;
+    x.count++;
+  });
+  return [...map.values()]
+    .map(x=>({...x,rate:x.issued?x.activated/x.issued:0}))
+    .sort((a,b)=>b.rate-a.rate);
+}
+
+function totals(rows){
+  const x={issued:0,completed:0,activated:0,count:rows.length};
+  rows.forEach(r=>{
+    x.issued+=r.issued;
+    x.completed+=r.completed;
+    x.activated+=r.activated;
+  });
+  x.rate=x.issued?x.activated/x.issued:0;
+  return x;
+}
+
+function status(rate){
+  return rate>=.5?[t("excellent"),"#1e9e63"]:
+         rate>=.25?[t("ontrack"),"#b79d28"]:
+         rate>=.1?[t("early"),"#e08a2e"]:
+         [t("attention"),"#d64545"];
+}
+
+async function loadData(){
+  document.getElementById("app").innerHTML=`<div class="loading">${t("loading")}</div>`;
+  try{
+    const res=await fetch(CSV_URL,{cache:"no-store"});
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    DATA=buildData(parseCSV(await res.text()));
+    if(!DATA.length)throw new Error("В таблице не найдены строки данных");
+    render();
+  }catch(e){
+    document.getElementById("app").innerHTML=`<div class="card"><div class="err">Не удалось загрузить данные: ${esc(e.message)}</div></div>`;
+  }
+}
+
+function setLang(l){
+  LANG=l;
+  document.documentElement.lang=l==="kz"?"kk":"ru";
+  document.getElementById("ruBtn").classList.toggle("active",l==="ru");
+  document.getElementById("kzBtn").classList.toggle("active",l==="kz");
+  renderHeader();
+  if(DATA.length)render();
+}
+
+function renderHeader(){
+  document.getElementById("title").textContent=t("title");
+  document.getElementById("subtitle").textContent=t("subtitle");
+}
+
+function currentRows(){
+  if(view.level==="country")return DATA;
+  if(view.level==="region")return DATA.filter(r=>r.region===view.region);
+  return DATA.filter(r=>r.region===view.region&&r.district===view.district);
+}
+
+function goCountry(){view={level:"country",region:null,district:null};render()}
+function goRegion(region){view={level:"region",region,district:null};render()}
+function goDistrict(region,district){view={level:"district",region,district};render()}
+
+function jsArg(s){return String(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'")}
+
+function breadcrumb(){
+  let h=`<button onclick="goCountry()">${t("country")}</button>`;
+  if(view.region)h+=` &nbsp;›&nbsp; <button onclick="goRegion('${jsArg(view.region)}')">${esc(view.region)}</button>`;
+  if(view.district)h+=` &nbsp;›&nbsp; <span>${esc(view.district)}</span>`;
+  return `<div class="breadcrumb">${h}</div>`;
+}
+
+function render(){
+  renderHeader();
+
+  const rows=currentRows();
+  const total=totals(rows);
+  const grouped=view.level==="country"
+    ? aggregate(rows,"region")
+    : view.level==="region"
+      ? aggregate(rows,"district")
+      : null;
+
+  const rankTitle=view.level==="country"?t("regionRanking"):t("districtRanking");
+
+  document.getElementById("app").innerHTML=`
+    ${breadcrumb()}
+    <div class="kpis">
+      <div class="kpi"><div class="v">${fmt(total.count)}</div><div class="l">${t("institutions")}</div></div>
+      <div class="kpi"><div class="v">${fmt(total.issued)}</div><div class="l">${t("issued")}</div></div>
+      <div class="kpi"><div class="v">${fmt(total.activated)}</div><div class="l">${t("activated")}</div></div>
+      <div class="kpi"><div class="v">${pct(total.rate)}</div><div class="l">${t("rate")}</div></div>
+    </div>
+
+    ${grouped?`
+      <div class="card">
+        <h2>${rankTitle}</h2>
+        <p class="hint">${view.level==="country"?t("regions"):t("districts")}</p>
+        <div class="chartbox"><canvas id="rankChart"></canvas></div>
+      </div>`:""}
+
+    <div class="card">
+      <h2>${t("organizations")}</h2>
+      <div class="controls">
+        <input id="search" placeholder="${t("search")}" oninput="drawTable()">
+        <select id="typeFilter" onchange="drawTable()">
+          <option value="">${t("allTypes")}</option>
+          <option value="школ">${t("schools")}</option>
+          <option value="детсад">${t("kindergartens")}</option>
+        </select>
+      </div>
+      <div class="tablewrap"><table id="table"></table></div>
+    </div>
+
+    <div class="updated">${t("updated")}: ${esc(DATA.find(x=>x.date)?.date||new Date().toLocaleString())}</div>`;
+
+  if(grouped)drawChart(grouped);
+  drawTable();
+}
+
+function drawChart(items){
+  if(chart)chart.destroy();
+  const ctx=document.getElementById("rankChart");
+  chart=new Chart(ctx,{
+    type:"bar",
+    data:{
+      labels:items.map(x=>x.name),
+      datasets:[{
+        data:items.map(x=>+(x.rate*100).toFixed(1)),
+        backgroundColor:"#1a73c9",
+        borderRadius:4
+      }]
+    },
+    options:{
+      indexAxis:"y",
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{min:0,max:100,ticks:{callback:v=>v+"%"}},
+        y:{grid:{display:false}}
+      },
+      onClick:(event,elements)=>{
+        if(!elements.length)return;
+        const item=items[elements[0].index];
+        if(view.level==="country")goRegion(item.name);
+        else goDistrict(view.region,item.name);
+      }
+    }
+  });
+}
+
+function drawTable(){
+  let rows=currentRows();
+  const q=norm(document.getElementById("search")?.value);
+  const f=norm(document.getElementById("typeFilter")?.value);
+
+  rows=rows.filter(r=>
+    (!q||norm(r.name).includes(q)||norm(r.region).includes(q)||norm(r.district).includes(q)) &&
+    (!f||norm(r.type).includes(f))
+  );
+
+  rows.sort((a,b)=>{
+    const av=a[sortKey],bv=b[sortKey];
+    if(typeof av==="string")return av.localeCompare(bv,"ru")*sortDir;
+    return (av-bv)*sortDir;
+  });
+
+  const arrow=k=>sortKey===k?(sortDir===1?" ▲":" ▼"):"";
+  const th=(k,label,cls="")=>`<th class="${cls}" onclick="setSort('${k}')">${label}${arrow(k)}</th>`;
+
+  let h=`<thead><tr>
+    ${th("region",t("region"))}
+    ${th("district",t("district"))}
+    ${th("type",t("type"))}
+    ${th("name",t("institution"))}
+    ${th("issued",t("issued"),"num")}
+    ${th("completed",t("completed"),"num")}
+    ${th("activated",t("activated"),"num")}
+    ${th("rate",t("rate"),"num")}
+    <th>${t("status")}</th>
+  </tr></thead><tbody>`;
+
+  rows.forEach(r=>{
+    const s=status(r.rate);
+    h+=`<tr>
+      <td><button class="linkbtn" onclick="goRegion('${jsArg(r.region)}')">${esc(r.region)}</button></td>
+      <td><button class="linkbtn" onclick="goDistrict('${jsArg(r.region)}','${jsArg(r.district)}')">${esc(r.district)}</button></td>
+      <td>${esc(r.type)}</td>
+      <td class="name">${esc(r.name)}</td>
+      <td class="num">${fmt(r.issued)}</td>
+      <td class="num">${fmt(r.completed)}</td>
+      <td class="num">${fmt(r.activated)}</td>
+      <td class="num">${pct(r.rate)}</td>
+      <td><span class="badge" style="background:${s[1]}">${s[0]}</span></td>
+    </tr>`;
+  });
+
+  h+="</tbody>";
+  document.getElementById("table").innerHTML=h;
+}
+
+function setSort(k){
+  if(sortKey===k)sortDir*=-1;
+  else{
+    sortKey=k;
+    sortDir=["name","region","district","type"].includes(k)?1:-1;
+  }
+  drawTable();
+}
+
+renderHeader();
+loadData();
+</script>
+</body>
+</html>
