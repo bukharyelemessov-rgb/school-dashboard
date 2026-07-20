@@ -1,402 +1,49 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ChatGPT Edu — школы и детские сады Казахстана</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"></script>
 <style>
-:root{
-  --bg:#f3f5f8;--card:#fff;--ink:#1c2b3a;--muted:#647180;--line:#e1e7ee;
-  --navy:#16324f;--accent:#1a73c9;--good:#1e9e63;--mid:#e08a2e;--bad:#d64545;
-  --shadow:0 4px 18px rgba(22,50,79,.08)
-}
-*{box-sizing:border-box}
-body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink)}
-.wrap{max-width:1200px;margin:0 auto;padding:22px 18px 60px}
-.top{background:var(--navy);color:#fff;padding:22px 26px;border-radius:14px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:var(--shadow)}
-.top h1{margin:0;font-size:22px}.top p{margin:7px 0 0;opacity:.85;font-size:13px}
-.actions{display:flex;gap:10px;align-items:center}
-button{cursor:pointer;border:0;border-radius:8px;font-weight:700}
-.reload{background:rgba(255,255,255,.15);color:#fff;padding:9px 14px}
-.lang{display:flex;background:rgba(255,255,255,.12);padding:4px;border-radius:9px}
-.lang button{background:transparent;color:#fff;padding:8px 13px}
-.lang button.active{background:#fff;color:var(--navy)}
-.breadcrumb{margin-top:16px;font-size:13px;color:var(--muted)}
-.breadcrumb button{background:none;color:var(--accent);padding:0;font-size:13px}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-top:16px}
-.kpi,.card{background:var(--card);border-radius:12px;box-shadow:var(--shadow)}
-.kpi{padding:17px;border-top:4px solid var(--accent)}
-.kpi .v{font-size:28px;font-weight:800}
-.kpi .l{font-size:12.5px;color:var(--muted);margin-top:5px}
-.card{padding:19px;margin-top:18px}
-.card h2{margin:0 0 5px;color:var(--navy);font-size:17px}
-.hint{margin:0 0 14px;color:var(--muted);font-size:12.5px}
-.chartbox{height:420px;position:relative}
-.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-input,select{padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;background:#fff;color:var(--ink)}
-input{flex:1;min-width:220px}select{min-width:170px}
-.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}
-table{width:100%;border-collapse:collapse;min-width:980px;font-size:13px}
-th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left}
-th{background:#f7f9fc;color:var(--muted);font-size:12px;cursor:pointer;position:sticky;top:0}
-td.num,th.num{text-align:right}
-td.name{font-weight:600;white-space:normal;min-width:300px}
-tr:hover td{background:#f8fafc}
-.linkbtn{background:none;color:var(--accent);padding:0;text-align:left}
-.badge{display:inline-block;color:#fff;padding:4px 8px;border-radius:6px;font-weight:700;font-size:11.5px;white-space:nowrap}
-.loading{padding:60px;text-align:center;color:var(--muted)}
-.err{background:#fff0f0;border:1px solid #efc2c2;color:#7c2f2f;padding:16px;border-radius:10px}
-.updated{margin-top:18px;text-align:center;color:var(--muted);font-size:11.5px}
-
-.tree{display:grid;gap:10px}
-.tree details{border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden}
-.tree details details{margin:8px 12px;border-radius:8px;box-shadow:none}
-.tree summary{list-style:none;cursor:pointer;padding:13px 15px;display:flex;align-items:center;gap:10px;font-weight:700;color:var(--navy);background:#f8fafc}
-.tree summary::-webkit-details-marker{display:none}
-.tree summary::before{content:"▸";display:inline-block;transition:transform .15s;color:var(--accent)}
-.tree details[open]>summary::before{transform:rotate(90deg)}
-.tree .meta{margin-left:auto;display:flex;gap:12px;align-items:center;font-size:12px;color:var(--muted);font-weight:600}
-.tree .type-block>summary{background:#fff;color:var(--ink)}
-.inst-list{padding:0 12px 12px}
-.inst-row{display:grid;grid-template-columns:minmax(260px,1fr) repeat(4,110px);gap:10px;align-items:center;padding:10px 8px;border-top:1px solid var(--line);font-size:12.5px}
-.inst-row:first-child{border-top:0}
-.inst-name{font-weight:600;line-height:1.35}
-.inst-metric{text-align:right;font-variant-numeric:tabular-nums}
-.inst-head{display:grid;grid-template-columns:minmax(260px,1fr) repeat(4,110px);gap:10px;padding:9px 8px;color:var(--muted);font-size:11px;font-weight:700;border-bottom:1px solid var(--line)}
-@media(max-width:760px){.tree .meta{display:none}.inst-head{display:none}.inst-row{grid-template-columns:1fr 1fr;gap:6px}.inst-name{grid-column:1/-1}.inst-metric{text-align:left}.inst-metric::before{content:attr(data-label) ": ";color:var(--muted);font-weight:600}}
-
-@media(max-width:850px){.kpis{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:520px){.kpis{grid-template-columns:1fr}.wrap{padding:12px 10px 40px}.top{padding:16px}.top h1{font-size:18px}}
+:root{--bg:#f3f5f8;--card:#fff;--ink:#1c2b3a;--muted:#5f6b7a;--line:#e2e7ee;--navy:#16324f;--navy2:#1f4568;--accent:#1a73c9;--accent2:#3e97e8;--good:#1e9e63;--mid:#e08a2e;--bad:#d64545;--neutral:#8a94a3;--shadow:0 4px 18px rgba(22,50,79,.08)}
+*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink)}.wrap{max-width:1180px;margin:auto;padding:22px 20px 60px}
+.top{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;background:var(--navy);color:#fff;border-radius:14px;padding:22px 26px;box-shadow:var(--shadow)}
+.top h1{margin:0;font-size:21px}.top p{margin:6px 0 0;opacity:.85;font-size:13.5px}.actions{display:flex;gap:10px;align-items:center}button{border:0;cursor:pointer;font-weight:700}
+.reload{background:rgba(255,255,255,.14);color:#fff;padding:9px 14px;border-radius:9px}.lang{display:flex;gap:6px;background:rgba(255,255,255,.12);padding:5px;border-radius:10px}.lang button{padding:8px 16px;border-radius:7px;background:transparent;color:#fff}.lang button.active{background:#fff;color:var(--navy)}
+.card,.kpi{background:var(--card);border-radius:12px;box-shadow:var(--shadow)}.card{padding:20px;margin-top:18px}.card h2{margin:0 0 4px;font-size:16px;color:var(--navy)}.hint{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+.timeline{padding:16px 20px 14px}.tl-head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.tl-head h2{font-size:12.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);margin:0}.tl-left{font-size:13px;font-weight:700;color:var(--navy)}.tl-track{position:relative;height:6px;background:#e2e7ee;border-radius:99px;margin:14px 0 8px}.tl-fill{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:99px}.tl-dot{position:absolute;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 0 0 3px rgba(26,115,201,.25)}.tl-months,.tl-dates{display:flex;justify-content:space-between;color:var(--muted)}.tl-months{font-size:10.5px}.tl-dates{font-size:11.5px;margin-top:8px;line-height:1.45}.tl-dates b{color:var(--ink);font-size:12.5px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:18px 0 4px}.kpi{padding:18px;border-top:4px solid var(--accent)}.kpi .val{font-size:29px;font-weight:800;color:var(--navy)}.kpi .lab{color:var(--muted);font-size:13px;margin-top:6px}.kpi .sub{font-size:12px;margin-top:8px;color:var(--muted);font-weight:600}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}.chartbox{position:relative;height:430px}
+.combo{position:relative}input,select{width:100%;padding:12px 14px;border-radius:9px;border:1.5px solid var(--line);font-size:14px;background:#fff;color:var(--ink)}.combolist{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:9px;max-height:300px;overflow:auto;z-index:20;box-shadow:0 8px 24px rgba(22,50,79,.16)}.combolist div{padding:10px 14px;cursor:pointer;border-bottom:1px solid #f2f5f9;font-size:13.5px}.combolist div:hover{background:#f0f5fa}
+.spot{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:16px}.spotcard{border-radius:10px;padding:16px;color:#fff}.spotcard .n{font-size:25px;font-weight:800}.spotcard .t{font-size:12.5px;opacity:.9;margin-top:4px}.s1{background:var(--navy)}.s2{background:var(--navy2)}.s3{background:var(--accent)}
+.hbars{margin-top:18px;display:grid;gap:9px}.hbar{display:grid;grid-template-columns:170px 1fr 120px;align-items:center;gap:12px;font-size:12.5px}.hbar .l{color:var(--muted);font-weight:600}.track{background:#eceff4;border-radius:6px;height:20px;overflow:hidden}.fill{height:100%;border-radius:6px;min-width:4px}.v{text-align:right;font-weight:700}
+.tree{display:grid;gap:10px}.tree details{border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden}.tree details details{margin:8px 12px;border-radius:8px}.tree summary{list-style:none;cursor:pointer;padding:13px 15px;display:flex;align-items:center;gap:10px;font-weight:700;color:var(--navy);background:#f8fafc}.tree summary::-webkit-details-marker{display:none}.tree summary::before{content:"▸";transition:transform .15s;color:var(--accent)}.tree details[open]>summary::before{transform:rotate(90deg)}.tree .meta{margin-left:auto;display:flex;gap:12px;font-size:12px;color:var(--muted)}.tree .type-block>summary{background:#fff;color:var(--ink)}
+.inst-list{padding:0 12px 12px}.inst-head,.inst-row{display:grid;grid-template-columns:minmax(260px,1fr) repeat(4,110px);gap:10px;align-items:center}.inst-head{padding:9px 8px;color:var(--muted);font-size:11px;font-weight:700;border-bottom:1px solid var(--line)}.inst-row{padding:10px 8px;border-top:1px solid var(--line);font-size:12.5px}.inst-name{font-weight:600;line-height:1.35}.inst-metric{text-align:right}
+.loading{padding:60px;text-align:center;color:var(--muted)}.err{background:#fdf1f1;border:1px solid #e8c4c4;color:#7c2f2f;padding:18px;border-radius:10px}.srcbar{font-size:11.5px;color:var(--muted);text-align:center;margin-top:26px}
+@media(max-width:860px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.spot{grid-template-columns:repeat(2,1fr)}}@media(max-width:640px){.wrap{padding:12px 10px 40px}.top{padding:14px 16px}.kpis{gap:10px}.kpi .val{font-size:22px}.tl-months{display:none}.hbar{grid-template-columns:100px 1fr 90px}.tree .meta{display:none}.inst-head{display:none}.inst-row{grid-template-columns:1fr 1fr}.inst-name{grid-column:1/-1}.inst-metric{text-align:left}}
 </style>
-</head>
-<body>
-<div class="wrap">
-  <header class="top">
-    <div>
-      <h1 id="title"></h1>
-      <p id="subtitle"></p>
-    </div>
-    <div class="actions">
-      <button class="reload" onclick="loadData()">⟳</button>
-      <div class="lang">
-        <button id="kzBtn" onclick="setLang('kz')">ҚАЗ</button>
-        <button id="ruBtn" class="active" onclick="setLang('ru')">РУС</button>
-      </div>
-    </div>
-  </header>
-  <div id="app"><div class="loading">Загрузка данных…</div></div>
-</div>
-
+</head><body><div class="wrap">
+<header class="top"><div><h1 id="ttl"></h1><p id="sub"></p></div><div class="actions"><button class="reload" onclick="loadData()">⟳</button><div class="lang"><button data-l="kz" onclick="setLang('kz')">ҚАЗ</button><button data-l="ru" class="active" onclick="setLang('ru')">РУС</button></div></div></header>
+<div id="app"><div class="loading">Загрузка данных…</div></div><div class="srcbar" id="src"></div></div>
 <script>
-const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vSDrccbs1chrR8dXBjOc1eMA3vIKclVIHCjted-_itgYDFUA7QBvTzu76CV7TuUFaMXWikIxKJa37m9/pub?gid=1899398267&single=true&output=csv";
-
-const TXT={
-  ru:{
-    title:"ChatGPT Edu в школах и детских садах Казахстана",
-    subtitle:"Активация лицензий по регионам, районам и организациям образования",
-    loading:"Загрузка данных…",country:"Казахстан",institutions:"Учреждений",
-    issued:"Выдано лицензий",completed:"Завершили вводный модуль",activated:"Активировали лицензии",
-    rate:"Процент активации",regions:"Регионы",districts:"Районы",organizations:"Учреждения",
-    regionRanking:"Рейтинг регионов",districtRanking:"Рейтинг районов",
-    search:"Поиск учреждения…",allTypes:"Все типы",schools:"Школы",kindergartens:"Детсады",
-    region:"Регион",district:"Район",type:"Тип",institution:"Учреждение",
-    status:"Статус",excellent:"Отлично",ontrack:"По плану",early:"Начальный этап",attention:"Требует внимания",
-    updated:"Последнее обновление",noData:"Данные не найдены"
-  },
-  kz:{
-    title:"ChatGPT Edu — Қазақстан мектептері мен балабақшаларында",
-    subtitle:"Өңірлер, аудандар және білім беру ұйымдары бойынша лицензияларды белсендіру",
-    loading:"Деректер жүктелуде…",country:"Қазақстан",institutions:"Ұйымдар",
-    issued:"Берілген лицензиялар",completed:"Кіріспе модульді аяқтады",activated:"Лицензияны белсендірді",
-    rate:"Белсендіру пайызы",regions:"Өңірлер",districts:"Аудандар",organizations:"Ұйымдар",
-    regionRanking:"Өңірлер рейтингі",districtRanking:"Аудандар рейтингі",
-    search:"Ұйымды іздеу…",allTypes:"Барлық түрі",schools:"Мектептер",kindergartens:"Балабақшалар",
-    region:"Өңір",district:"Аудан",type:"Түрі",institution:"Ұйым",
-    status:"Мәртебе",excellent:"Өте жақсы",ontrack:"Жоспар бойынша",early:"Бастапқы кезең",attention:"Назар қажет",
-    updated:"Соңғы жаңарту",noData:"Деректер табылмады"
-  }
-};
-
-let LANG="ru";
-let DATA=[];
-let view={level:"country",region:null,district:null};
-let chart=null;
-let sortKey="rate";
-let sortDir=-1;
-
-function t(k){return TXT[LANG][k]||k}
-function fmt(n){return Number(n||0).toLocaleString(LANG==="kz"?"kk-KZ":"ru-RU")}
-function pct(n){return (Number(n||0)*100).toFixed(1)+"%"}
-function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function norm(s){return String(s||"").trim().toLowerCase()}
-function num(s){
-  const cleaned=String(s??"").replace(/\s/g,"").replace(",",".").replace(/[^0-9.\-]/g,"");
-  const v=parseFloat(cleaned);
-  return isNaN(v)?0:v;
-}
-
-function parseCSV(text){
-  const rows=[];let row=[],cur="",quoted=false;
-  for(let i=0;i<text.length;i++){
-    const ch=text[i];
-    if(quoted){
-      if(ch==='"'){
-        if(text[i+1]==='"'){cur+='"';i++}else quoted=false;
-      }else cur+=ch;
-    }else{
-      if(ch==='"')quoted=true;
-      else if(ch===','){row.push(cur);cur=""}
-      else if(ch==='\n'){row.push(cur);rows.push(row);row=[];cur=""}
-      else if(ch!=='\r')cur+=ch;
-    }
-  }
-  if(cur.length||row.length){row.push(cur);rows.push(row)}
-  return rows;
-}
-
-function buildData(rows){
-  if(!rows.length)return [];
-  const h=rows[0].map(norm);
-  const find=words=>h.findIndex(x=>words.some(w=>x.includes(w)));
-
-  const iRegion=find(["регион","область","өңір"]);
-  const iType=find(["тип","түр"]);
-  const iDistrict=find(["район","аудан"]);
-  const iName=find(["учреждение","наименование","организация","ұйым"]);
-  const iIssued=find(["выдано лицензий","начали вводный","берілген лиценз"]);
-  const iCompleted=find(["завершили","аяқтады"]);
-  const iActivated=find(["активировано","активировали","белсендір"]);
-  const iDate=find(["дата обновления","жаңарту"]);
-
-  return rows.slice(1)
-    .filter(r=>r.some(x=>String(x).trim()))
-    .map((r,idx)=>{
-      const issued=num(r[iIssued]);
-      const completed=num(r[iCompleted]);
-      const activated=num(r[iActivated]);
-      return {
-        id:idx+1,
-        region:(r[iRegion]||"").trim(),
-        type:(r[iType]||"").trim(),
-        district:(r[iDistrict]||"").trim(),
-        name:(r[iName]||"").trim(),
-        issued,completed,activated,
-        rate:issued?activated/issued:0,
-        date:iDate>=0?(r[iDate]||"").trim():""
-      };
-    })
-    .filter(r=>r.region&&r.name);
-}
-
-function aggregate(rows,key){
-  const map=new Map();
-  rows.forEach(r=>{
-    const k=r[key]||"—";
-    if(!map.has(k))map.set(k,{name:k,issued:0,completed:0,activated:0,count:0});
-    const x=map.get(k);
-    x.issued+=r.issued;
-    x.completed+=r.completed;
-    x.activated+=r.activated;
-    x.count++;
-  });
-  return [...map.values()]
-    .map(x=>({...x,rate:x.issued?x.activated/x.issued:0}))
-    .sort((a,b)=>b.rate-a.rate);
-}
-
-function totals(rows){
-  const x={issued:0,completed:0,activated:0,count:rows.length};
-  rows.forEach(r=>{
-    x.issued+=r.issued;
-    x.completed+=r.completed;
-    x.activated+=r.activated;
-  });
-  x.rate=x.issued?x.activated/x.issued:0;
-  return x;
-}
-
-function status(rate){
-  return rate>=.5?[t("excellent"),"#1e9e63"]:
-         rate>=.25?[t("ontrack"),"#b79d28"]:
-         rate>=.1?[t("early"),"#e08a2e"]:
-         [t("attention"),"#d64545"];
-}
-
-async function loadData(){
-  document.getElementById("app").innerHTML=`<div class="loading">${t("loading")}</div>`;
-  try{
-    const res=await fetch(CSV_URL,{cache:"no-store"});
-    if(!res.ok)throw new Error("HTTP "+res.status);
-    DATA=buildData(parseCSV(await res.text()));
-    if(!DATA.length)throw new Error("В таблице не найдены строки данных");
-    render();
-  }catch(e){
-    document.getElementById("app").innerHTML=`<div class="card"><div class="err">Не удалось загрузить данные: ${esc(e.message)}</div></div>`;
-  }
-}
-
-function setLang(l){
-  LANG=l;
-  document.documentElement.lang=l==="kz"?"kk":"ru";
-  document.getElementById("ruBtn").classList.toggle("active",l==="ru");
-  document.getElementById("kzBtn").classList.toggle("active",l==="kz");
-  renderHeader();
-  if(DATA.length)render();
-}
-
-function renderHeader(){
-  document.getElementById("title").textContent=t("title");
-  document.getElementById("subtitle").textContent=t("subtitle");
-}
-
-function currentRows(){
-  if(view.level==="country")return DATA;
-  if(view.level==="region")return DATA.filter(r=>r.region===view.region);
-  return DATA.filter(r=>r.region===view.region&&r.district===view.district);
-}
-
-function goCountry(){view={level:"country",region:null,district:null};render()}
-function goRegion(region){view={level:"region",region,district:null};render()}
-function goDistrict(region,district){view={level:"district",region,district};render()}
-
-function jsArg(s){return String(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'")}
-
-function breadcrumb(){
-  let h=`<button onclick="goCountry()">${t("country")}</button>`;
-  if(view.region)h+=` &nbsp;›&nbsp; <button onclick="goRegion('${jsArg(view.region)}')">${esc(view.region)}</button>`;
-  if(view.district)h+=` &nbsp;›&nbsp; <span>${esc(view.district)}</span>`;
-  return `<div class="breadcrumb">${h}</div>`;
-}
-
-function render(){
-  renderHeader();
-
-  const rows=currentRows();
-  const total=totals(rows);
-  const grouped=view.level==="country"
-    ? aggregate(rows,"region")
-    : view.level==="region"
-      ? aggregate(rows,"district")
-      : null;
-
-  const rankTitle=view.level==="country"?t("regionRanking"):t("districtRanking");
-
-  document.getElementById("app").innerHTML=`
-    ${breadcrumb()}
-    <div class="kpis">
-      <div class="kpi"><div class="v">${fmt(total.count)}</div><div class="l">${t("institutions")}</div></div>
-      <div class="kpi"><div class="v">${fmt(total.issued)}</div><div class="l">${t("issued")}</div></div>
-      <div class="kpi"><div class="v">${fmt(total.activated)}</div><div class="l">${t("activated")}</div></div>
-      <div class="kpi"><div class="v">${pct(total.rate)}</div><div class="l">${t("rate")}</div></div>
-    </div>
-
-    ${grouped?`
-      <div class="card">
-        <h2>${rankTitle}</h2>
-        <p class="hint">${view.level==="country"?t("regions"):t("districts")}</p>
-        <div class="chartbox"><canvas id="rankChart"></canvas></div>
-      </div>`:""}
-
-    <div class="card">
-      <h2>${t("organizations")}</h2>
-      <p class="hint">${LANG==="kz"?"Өңірді, ауданды және ұйым түрін ашыңыз":"Раскройте регион, район и тип организации"}</p>
-      <div class="controls">
-        <input id="search" placeholder="${t("search")}" oninput="renderTree()">
-      </div>
-      <div id="tree" class="tree"></div>
-    </div>
-
-    <div class="updated">${t("updated")}: ${esc(DATA.find(x=>x.date)?.date||new Date().toLocaleString())}</div>`;
-
-  if(grouped)drawChart(grouped);
-  renderTree();
-}
-
-function drawChart(items){
-  if(chart)chart.destroy();
-  const ctx=document.getElementById("rankChart");
-  chart=new Chart(ctx,{
-    type:"bar",
-    data:{
-      labels:items.map(x=>x.name),
-      datasets:[{
-        data:items.map(x=>+(x.rate*100).toFixed(1)),
-        backgroundColor:"#1a73c9",
-        borderRadius:4
-      }]
-    },
-    options:{
-      indexAxis:"y",
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{min:0,max:100,ticks:{callback:v=>v+"%"}},
-        y:{grid:{display:false}}
-      },
-      onClick:(event,elements)=>{
-        if(!elements.length)return;
-        const item=items[elements[0].index];
-        if(view.level==="country")goRegion(item.name);
-        else goDistrict(view.region,item.name);
-      }
-    }
-  });
-}
-
-function renderTree(){
-  const root=document.getElementById("tree");
-  if(!root)return;
-  const q=norm(document.getElementById("search")?.value);
-  let rows=currentRows().filter(r=>!q||norm(r.name).includes(q)||norm(r.region).includes(q)||norm(r.district).includes(q)||norm(r.type).includes(q));
-  const regionMap=new Map();
-  rows.forEach(r=>{
-    if(!regionMap.has(r.region))regionMap.set(r.region,new Map());
-    const districts=regionMap.get(r.region);
-    const d=r.district||"—";
-    if(!districts.has(d))districts.set(d,new Map());
-    const types=districts.get(d);
-    const type=norm(r.type).includes("детсад")?"детсады":"школы";
-    if(!types.has(type))types.set(type,[]);
-    types.get(type).push(r);
-  });
-  if(!rows.length){root.innerHTML=`<div class="hint">${t("noData")}</div>`;return;}
-  const metric=(label,value)=>`<span class="inst-metric" data-label="${esc(label)}">${value}</span>`;
-  let html="";
-  [...regionMap.entries()].sort((a,b)=>a[0].localeCompare(b[0],"ru")).forEach(([region,districts])=>{
-    const regionRows=rows.filter(r=>r.region===region), rt=totals(regionRows);
-    html+=`<details ${view.level!=="country"||q?"open":""}><summary><span>${esc(region)}</span><span class="meta"><span>${fmt(rt.count)} ${t("institutions")}</span><span>${pct(rt.rate)}</span></span></summary>`;
-    [...districts.entries()].sort((a,b)=>a[0].localeCompare(b[0],"ru")).forEach(([district,types])=>{
-      const districtRows=regionRows.filter(r=>(r.district||"—")===district), dt=totals(districtRows);
-      html+=`<details ${view.level==="district"||q?"open":""}><summary><span>${esc(district)}</span><span class="meta"><span>${fmt(dt.count)}</span><span>${pct(dt.rate)}</span></span></summary>`;
-      [...types.entries()].sort((a,b)=>a[0].localeCompare(b[0],"ru")).forEach(([type,items])=>{
-        const tt=totals(items);
-        const label=type==="школы"?t("schools"):t("kindergartens");
-        html+=`<details class="type-block" ${q?"open":""}><summary><span>${label}</span><span class="meta"><span>${fmt(tt.count)}</span><span>${pct(tt.rate)}</span></span></summary><div class="inst-list"><div class="inst-head"><span>${t("institution")}</span><span>${t("issued")}</span><span>${t("completed")}</span><span>${t("activated")}</span><span>${t("rate")}</span></div>`;
-        items.sort((a,b)=>a.name.localeCompare(b.name,"ru")).forEach(r=>{
-          html+=`<div class="inst-row"><div class="inst-name">${esc(r.name)}</div>${metric(t("issued"),fmt(r.issued))}${metric(t("completed"),fmt(r.completed))}${metric(t("activated"),fmt(r.activated))}${metric(t("rate"),pct(r.rate))}</div>`;
-        });
-        html+=`</div></details>`;
-      });
-      html+=`</details>`;
-    });
-    html+=`</details>`;
-  });
-  root.innerHTML=html;
-}
-
-function setSort(k){
-  if(sortKey===k)sortDir*=-1;
-  else{
-    sortKey=k;
-    sortDir=["name","region","district","type"].includes(k)?1:-1;
-  }
-  renderTree();
-}
-
-renderHeader();
-loadData();
-</script>
-</body>
-</html>
+const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSDrccbs1chrR8dXBjOc1eMA3vIKclVIHCjted-_itgYDFUA7QBvTzu76CV7TuUFaMXWikIxKJa37m9/pub?gid=1899398267&single=true&output=csv';
+const T={ru:{title:"ChatGPT Edu в школах и детских садах Казахстана",sub:"Показатели активации лицензий по регионам, районам и учреждениям.",loading:"Загрузка данных…",inst:"Учреждений",issued:"Выдано лицензий",activated:"Активировано лицензий",coverage:"Общий охват активации",leaders:"Лидеры активации",leadersHint:"Топ-10 учреждений по проценту активации.",attention:"Требуют внимания",attentionHint:"10 учреждений с наименьшим процентом активации.",profile:"Профиль учреждения",profileHint:"Начните вводить название учреждения.",search:"Поиск учреждения…",nores:"Ничего не найдено",completed:"Завершили модуль",rate:"Процент активации",region:"Регион",district:"Район",type:"Тип",all:"Все области и учреждения",schools:"Школы",kindergartens:"Детсады",timeline:"Сроки проекта · 12 месяцев",start:"Запуск проекта",end:"Завершение проекта",left:"Осталось",days:"дн.",passed:"пройдено",updated:"Последнее обновление"},kz:{title:"ChatGPT Edu — Қазақстан мектептері мен балабақшаларында",sub:"Өңірлер, аудандар және ұйымдар бойынша лицензияларды белсендіру көрсеткіштері.",loading:"Деректер жүктелуде…",inst:"Ұйымдар",issued:"Берілген лицензиялар",activated:"Белсендірілген лицензиялар",coverage:"Жалпы белсендіру қамтуы",leaders:"Белсендіру көшбасшылары",leadersHint:"Белсендіру пайызы бойынша үздік 10 ұйым.",attention:"Назар аударуды қажет етеді",attentionHint:"Белсендіру пайызы ең төмен 10 ұйым.",profile:"Ұйым профилі",profileHint:"Ұйым атауын енгізіңіз.",search:"Ұйымды іздеу…",nores:"Ештеңе табылмады",completed:"Модульді аяқтады",rate:"Белсендіру пайызы",region:"Өңір",district:"Аудан",type:"Түрі",all:"Барлық өңірлер мен ұйымдар",schools:"Мектептер",kindergartens:"Балабақшалар",timeline:"Жоба мерзімі · 12 ай",start:"Жобаның басталуы",end:"Жобаның аяқталуы",left:"Қалды",days:"күн",passed:"өткен",updated:"Соңғы жаңарту"}};
+let LANG='ru',DATA=[],charts={},SEL=null;
+const fmt=n=>Number(n||0).toLocaleString(LANG==='kz'?'kk-KZ':'ru-RU'); const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); const norm=s=>String(s||'').trim().toLowerCase();
+function t(k){return T[LANG][k]||k} function num(s){const v=parseFloat(String(s??'').replace(/\s/g,'').replace(',','.').replace(/[^0-9.\-]/g,''));return isNaN(v)?0:v}
+function parseCSV(text){const rows=[];let row=[],cur='',q=false;for(let i=0;i<text.length;i++){const ch=text[i];if(q){if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch}else{if(ch==='"')q=true;else if(ch===','){row.push(cur);cur=''}else if(ch==='
+'){row.push(cur);rows.push(row);row=[];cur=''}else if(ch!=='')cur+=ch}}if(cur.length||row.length){row.push(cur);rows.push(row)}return rows}
+function buildData(rows){if(!rows.length)return[];const h=rows[0].map(norm),find=w=>h.findIndex(x=>w.some(z=>x.includes(z)));const ir=find(['регион','область','өңір']),it=find(['тип','түр']),id=find(['район','аудан']),inm=find(['учреждение','наименование','организация','ұйым']),ii=find(['выдано лицензий','начали вводный','берілген лиценз']),ic=find(['завершили','аяқтады']),ia=find(['активировано','активировали','белсендір']),idt=find(['дата обновления','жаңарту']);return rows.slice(1).filter(r=>r.some(x=>String(x).trim())).map((r,i)=>{const issued=num(r[ii]),completed=num(r[ic]),activated=num(r[ia]);return{id:i+1,region:(r[ir]||'').trim(),type:(r[it]||'').trim(),district:(r[id]||'').trim(),name:(r[inm]||'').trim(),issued,completed,activated,rate:issued?activated/issued:0,date:idt>=0?(r[idt]||'').trim():''}}).filter(r=>r.region&&r.name)}
+function totals(rows){const x={count:rows.length,issued:0,completed:0,activated:0};rows.forEach(r=>{x.issued+=r.issued;x.completed+=r.completed;x.activated+=r.activated});x.rate=x.issued?x.activated/x.issued:0;return x}
+function statusColor(r){return r>=.5?'#1e9e63':r>=.25?'#b7a02c':r>=.1?'#e08a2e':'#d64545'}
+function timelineHTML(){const s=new Date(2026,2,30),e=new Date(2027,2,29),now=Date.now(),ep=Math.max(0,Math.min(100,(now-s)/(e-s)*100)),left=Math.max(0,Math.ceil((e-now)/86400000)),months=LANG==='kz'?['нау'26','сәу','мам','мау','шіл','там','қыр','қаз','қар','жел','қаң'27','ақп','нау'27']:['мар'26','апр','май','июн','июл','авг','сен','окт','ноя','дек','янв'27','фев','мар'27'];return `<div class="card timeline"><div class="tl-head"><h2>${t('timeline')}</h2><span class="tl-left">${t('left')} ${left} ${t('days')} · ${t('passed')} ${ep.toFixed(0)}%</span></div><div class="tl-track"><div class="tl-fill" style="width:${ep}%"></div><div class="tl-dot" style="left:${ep}%"></div></div><div class="tl-months">${months.map(m=>`<span>${m}</span>`).join('')}</div><div class="tl-dates"><div><b>30.03.2026</b><br>${t('start')}</div><div style="text-align:right"><b>29.03.2027</b><br>${t('end')}</div></div></div>`}
+async function loadData(){document.getElementById('app').innerHTML=`<div class="loading">${t('loading')}</div>`;try{const r=await fetch(CSV_URL,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);DATA=buildData(parseCSV(await r.text()));if(!DATA.length)throw Error('Нет данных');render()}catch(e){document.getElementById('app').innerHTML=`<div class="card"><div class="err">Не удалось загрузить данные: ${esc(e.message)}</div></div>`}}
+function setLang(l){LANG=l;document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('active',b.dataset.l===l));document.documentElement.lang=l==='kz'?'kk':'ru';header();if(DATA.length)render()} function header(){document.getElementById('ttl').textContent=t('title');document.getElementById('sub').textContent=t('sub')}
+function drawChart(id,rows,color){if(charts[id])charts[id].destroy();charts[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:rows.map(r=>r.name.length>38?r.name.slice(0,36)+'…':r.name),datasets:[{data:rows.map(r=>+(r.rate*100).toFixed(1)),backgroundColor:color,borderRadius:4,barThickness:14}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+'%'}}},scales:{x:{min:0,max:100,ticks:{callback:v=>v+'%'}},y:{grid:{display:false}}}}})}
+function profileHTML(){return `<div class="card"><h2>${t('profile')}</h2><p class="hint">${t('profileHint')}</p><div class="combo"><input id="spotSearch" placeholder="${t('search')}" oninput="comboFilter()" onfocus="comboFilter()"><div id="comboList" class="combolist" hidden></div></div><div id="spotOut"></div></div>`}
+function comboFilter(){const q=norm(document.getElementById('spotSearch').value),list=document.getElementById('comboList'),opts=DATA.filter(r=>!q||norm(r.name).includes(q)||norm(r.region).includes(q)).slice(0,40);list.innerHTML=opts.length?opts.map(r=>`<div onclick="selectInst(${r.id})">${esc(r.name)} · <b>${(r.rate*100).toFixed(1)}%</b></div>`).join(''):`<div>${t('nores')}</div>`;list.hidden=false} function selectInst(id){SEL=id;document.getElementById('comboList').hidden=true;drawSpot(id)}
+function drawSpot(id){const r=DATA.find(x=>x.id===id)||DATA[0];SEL=r.id;const s=document.getElementById('spotSearch');if(s)s.value=r.name;document.getElementById('spotOut').innerHTML=`<div class="spot"><div class="spotcard s1"><div class="n">${fmt(r.issued)}</div><div class="t">${t('issued')}</div></div><div class="spotcard s2"><div class="n">${fmt(r.completed)}</div><div class="t">${t('completed')}</div></div><div class="spotcard s3"><div class="n">${fmt(r.activated)}</div><div class="t">${t('activated')}</div></div><div class="spotcard" style="background:${statusColor(r.rate)}"><div class="n">${(r.rate*100).toFixed(1)}%</div><div class="t">${t('rate')}</div></div></div><div class="hbars"><div class="hbar"><span class="l">${t('issued')}</span><div class="track"><div class="fill" style="width:100%;background:var(--navy)"></div></div><span class="v">${fmt(r.issued)} · 100%</span></div><div class="hbar"><span class="l">${t('completed')}</span><div class="track"><div class="fill" style="width:${Math.min(100,r.issued?r.completed/r.issued*100:0)}%;background:var(--accent)"></div></div><span class="v">${fmt(r.completed)}</span></div><div class="hbar"><span class="l">${t('activated')}</span><div class="track"><div class="fill" style="width:${Math.min(100,r.rate*100)}%;background:${statusColor(r.rate)}"></div></div><span class="v">${fmt(r.activated)} · ${(r.rate*100).toFixed(1)}%</span></div></div><p class="hint" style="margin-top:14px"><b>${esc(r.region)}</b> · ${esc(r.district)} · ${esc(r.type)}</p>`}
+function treeHTML(){const regions=[...new Set(DATA.map(r=>r.region))].sort((a,b)=>a.localeCompare(b,'ru'));return `<div class="card"><h2>${t('all')}</h2><p class="hint">${t('region')} → ${t('district')} → ${t('type')} → ${t('inst')}</p><div class="tree">${regions.map(region=>{const rr=DATA.filter(r=>r.region===region),rt=totals(rr),districts=[...new Set(rr.map(r=>r.district))].sort((a,b)=>a.localeCompare(b,'ru'));return `<details><summary>${esc(region)}<span class="meta"><span>${fmt(rt.count)} ${t('inst').toLowerCase()}</span><span>${(rt.rate*100).toFixed(1)}%</span></span></summary>${districts.map(d=>{const dr=rr.filter(r=>r.district===d),dt=totals(dr);return `<details><summary>${esc(d)}<span class="meta"><span>${fmt(dt.count)}</span><span>${(dt.rate*100).toFixed(1)}%</span></span></summary>${['школы','детсады'].map(tp=>{const rows=dr.filter(r=>norm(r.type).includes(tp==='школы'?'школ':'детсад'));if(!rows.length)return'';const tt=totals(rows);return `<details class="type-block"><summary>${tp==='школы'?t('schools'):t('kindergartens')}<span class="meta"><span>${rows.length}</span><span>${(tt.rate*100).toFixed(1)}%</span></span></summary><div class="inst-list"><div class="inst-head"><span>${t('inst')}</span><span>${t('issued')}</span><span>${t('completed')}</span><span>${t('activated')}</span><span>${t('rate')}</span></div>${rows.sort((a,b)=>b.rate-a.rate).map(r=>`<div class="inst-row"><div class="inst-name">${esc(r.name)}</div><div class="inst-metric">${fmt(r.issued)}</div><div class="inst-metric">${fmt(r.completed)}</div><div class="inst-metric">${fmt(r.activated)}</div><div class="inst-metric" style="color:${statusColor(r.rate)};font-weight:700">${(r.rate*100).toFixed(1)}%</div></div>`).join('')}</div></details>`}).join('')}</details>`}).join('')}</details>`}).join('')}</div></div>`}
+function render(){header();const nat=totals(DATA),sorted=DATA.slice().sort((a,b)=>b.rate-a.rate),top=sorted.slice(0,10),low=sorted.slice(-10).reverse();document.getElementById('app').innerHTML=`${timelineHTML()}<div class="kpis"><div class="kpi" style="border-top-color:var(--navy)"><div class="val">${fmt(nat.count)}</div><div class="lab">${t('inst')}</div></div><div class="kpi"><div class="val">${fmt(nat.issued)}</div><div class="lab">${t('issued')}</div></div><div class="kpi" style="border-top-color:var(--good)"><div class="val">${fmt(nat.activated)}</div><div class="lab">${t('activated')}</div></div><div class="kpi" style="border-top-color:${statusColor(nat.rate)}"><div class="val" style="color:${statusColor(nat.rate)}">${(nat.rate*100).toFixed(2)}%</div><div class="lab">${t('coverage')}</div><div class="sub">${t('activated')} ÷ ${t('issued').toLowerCase()}</div></div></div><div class="grid2"><div class="card"><h2>${t('leaders')}</h2><p class="hint">${t('leadersHint')}</p><div class="chartbox"><canvas id="topChart"></canvas></div></div><div class="card"><h2>${t('attention')}</h2><p class="hint">${t('attentionHint')}</p><div class="chartbox"><canvas id="lowChart"></canvas></div></div></div>${profileHTML()}${treeHTML()}`;drawChart('topChart',top,'#1e9e63');drawChart('lowChart',low,'#d64545');drawSpot(SEL||DATA[0].id);document.getElementById('src').textContent=`${t('updated')}: ${DATA.find(x=>x.date)?.date||new Date().toLocaleString()}`}
+document.addEventListener('click',e=>{const c=document.querySelector('.combo');if(c&&!c.contains(e.target)){const l=document.getElementById('comboList');if(l)l.hidden=true}});header();loadData();
+</script></body></html>
