@@ -48,6 +48,24 @@ tr:hover td{background:#f8fafc}
 .loading{padding:60px;text-align:center;color:var(--muted)}
 .err{background:#fff0f0;border:1px solid #efc2c2;color:#7c2f2f;padding:16px;border-radius:10px}
 .updated{margin-top:18px;text-align:center;color:var(--muted);font-size:11.5px}
+
+.tree{display:grid;gap:10px}
+.tree details{border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden}
+.tree details details{margin:8px 12px;border-radius:8px;box-shadow:none}
+.tree summary{list-style:none;cursor:pointer;padding:13px 15px;display:flex;align-items:center;gap:10px;font-weight:700;color:var(--navy);background:#f8fafc}
+.tree summary::-webkit-details-marker{display:none}
+.tree summary::before{content:"▸";display:inline-block;transition:transform .15s;color:var(--accent)}
+.tree details[open]>summary::before{transform:rotate(90deg)}
+.tree .meta{margin-left:auto;display:flex;gap:12px;align-items:center;font-size:12px;color:var(--muted);font-weight:600}
+.tree .type-block>summary{background:#fff;color:var(--ink)}
+.inst-list{padding:0 12px 12px}
+.inst-row{display:grid;grid-template-columns:minmax(260px,1fr) repeat(4,110px);gap:10px;align-items:center;padding:10px 8px;border-top:1px solid var(--line);font-size:12.5px}
+.inst-row:first-child{border-top:0}
+.inst-name{font-weight:600;line-height:1.35}
+.inst-metric{text-align:right;font-variant-numeric:tabular-nums}
+.inst-head{display:grid;grid-template-columns:minmax(260px,1fr) repeat(4,110px);gap:10px;padding:9px 8px;color:var(--muted);font-size:11px;font-weight:700;border-bottom:1px solid var(--line)}
+@media(max-width:760px){.tree .meta{display:none}.inst-head{display:none}.inst-row{grid-template-columns:1fr 1fr;gap:6px}.inst-name{grid-column:1/-1}.inst-metric{text-align:left}.inst-metric::before{content:attr(data-label) ": ";color:var(--muted);font-weight:600}}
+
 @media(max-width:850px){.kpis{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:520px){.kpis{grid-template-columns:1fr}.wrap{padding:12px 10px 40px}.top{padding:16px}.top h1{font-size:18px}}
 </style>
@@ -282,21 +300,17 @@ function render(){
 
     <div class="card">
       <h2>${t("organizations")}</h2>
+      <p class="hint">${LANG==="kz"?"Өңірді, ауданды және ұйым түрін ашыңыз":"Раскройте регион, район и тип организации"}</p>
       <div class="controls">
-        <input id="search" placeholder="${t("search")}" oninput="drawTable()">
-        <select id="typeFilter" onchange="drawTable()">
-          <option value="">${t("allTypes")}</option>
-          <option value="школ">${t("schools")}</option>
-          <option value="детсад">${t("kindergartens")}</option>
-        </select>
+        <input id="search" placeholder="${t("search")}" oninput="renderTree()">
       </div>
-      <div class="tablewrap"><table id="table"></table></div>
+      <div id="tree" class="tree"></div>
     </div>
 
     <div class="updated">${t("updated")}: ${esc(DATA.find(x=>x.date)?.date||new Date().toLocaleString())}</div>`;
 
   if(grouped)drawChart(grouped);
-  drawTable();
+  renderTree();
 }
 
 function drawChart(items){
@@ -331,54 +345,45 @@ function drawChart(items){
   });
 }
 
-function drawTable(){
-  let rows=currentRows();
+function renderTree(){
+  const root=document.getElementById("tree");
+  if(!root)return;
   const q=norm(document.getElementById("search")?.value);
-  const f=norm(document.getElementById("typeFilter")?.value);
-
-  rows=rows.filter(r=>
-    (!q||norm(r.name).includes(q)||norm(r.region).includes(q)||norm(r.district).includes(q)) &&
-    (!f||norm(r.type).includes(f))
-  );
-
-  rows.sort((a,b)=>{
-    const av=a[sortKey],bv=b[sortKey];
-    if(typeof av==="string")return av.localeCompare(bv,"ru")*sortDir;
-    return (av-bv)*sortDir;
-  });
-
-  const arrow=k=>sortKey===k?(sortDir===1?" ▲":" ▼"):"";
-  const th=(k,label,cls="")=>`<th class="${cls}" onclick="setSort('${k}')">${label}${arrow(k)}</th>`;
-
-  let h=`<thead><tr>
-    ${th("region",t("region"))}
-    ${th("district",t("district"))}
-    ${th("type",t("type"))}
-    ${th("name",t("institution"))}
-    ${th("issued",t("issued"),"num")}
-    ${th("completed",t("completed"),"num")}
-    ${th("activated",t("activated"),"num")}
-    ${th("rate",t("rate"),"num")}
-    <th>${t("status")}</th>
-  </tr></thead><tbody>`;
-
+  let rows=currentRows().filter(r=>!q||norm(r.name).includes(q)||norm(r.region).includes(q)||norm(r.district).includes(q)||norm(r.type).includes(q));
+  const regionMap=new Map();
   rows.forEach(r=>{
-    const s=status(r.rate);
-    h+=`<tr>
-      <td><button class="linkbtn" onclick="goRegion('${jsArg(r.region)}')">${esc(r.region)}</button></td>
-      <td><button class="linkbtn" onclick="goDistrict('${jsArg(r.region)}','${jsArg(r.district)}')">${esc(r.district)}</button></td>
-      <td>${esc(r.type)}</td>
-      <td class="name">${esc(r.name)}</td>
-      <td class="num">${fmt(r.issued)}</td>
-      <td class="num">${fmt(r.completed)}</td>
-      <td class="num">${fmt(r.activated)}</td>
-      <td class="num">${pct(r.rate)}</td>
-      <td><span class="badge" style="background:${s[1]}">${s[0]}</span></td>
-    </tr>`;
+    if(!regionMap.has(r.region))regionMap.set(r.region,new Map());
+    const districts=regionMap.get(r.region);
+    const d=r.district||"—";
+    if(!districts.has(d))districts.set(d,new Map());
+    const types=districts.get(d);
+    const type=norm(r.type).includes("детсад")?"детсады":"школы";
+    if(!types.has(type))types.set(type,[]);
+    types.get(type).push(r);
   });
-
-  h+="</tbody>";
-  document.getElementById("table").innerHTML=h;
+  if(!rows.length){root.innerHTML=`<div class="hint">${t("noData")}</div>`;return;}
+  const metric=(label,value)=>`<span class="inst-metric" data-label="${esc(label)}">${value}</span>`;
+  let html="";
+  [...regionMap.entries()].sort((a,b)=>a[0].localeCompare(b[0],"ru")).forEach(([region,districts])=>{
+    const regionRows=rows.filter(r=>r.region===region), rt=totals(regionRows);
+    html+=`<details ${view.level!=="country"||q?"open":""}><summary><span>${esc(region)}</span><span class="meta"><span>${fmt(rt.count)} ${t("institutions")}</span><span>${pct(rt.rate)}</span></span></summary>`;
+    [...districts.entries()].sort((a,b)=>a[0].localeCompare(b[0],"ru")).forEach(([district,types])=>{
+      const districtRows=regionRows.filter(r=>(r.district||"—")===district), dt=totals(districtRows);
+      html+=`<details ${view.level==="district"||q?"open":""}><summary><span>${esc(district)}</span><span class="meta"><span>${fmt(dt.count)}</span><span>${pct(dt.rate)}</span></span></summary>`;
+      [...types.entries()].sort((a,b)=>a[0].localeCompare(b[0],"ru")).forEach(([type,items])=>{
+        const tt=totals(items);
+        const label=type==="школы"?t("schools"):t("kindergartens");
+        html+=`<details class="type-block" ${q?"open":""}><summary><span>${label}</span><span class="meta"><span>${fmt(tt.count)}</span><span>${pct(tt.rate)}</span></span></summary><div class="inst-list"><div class="inst-head"><span>${t("institution")}</span><span>${t("issued")}</span><span>${t("completed")}</span><span>${t("activated")}</span><span>${t("rate")}</span></div>`;
+        items.sort((a,b)=>a.name.localeCompare(b.name,"ru")).forEach(r=>{
+          html+=`<div class="inst-row"><div class="inst-name">${esc(r.name)}</div>${metric(t("issued"),fmt(r.issued))}${metric(t("completed"),fmt(r.completed))}${metric(t("activated"),fmt(r.activated))}${metric(t("rate"),pct(r.rate))}</div>`;
+        });
+        html+=`</div></details>`;
+      });
+      html+=`</details>`;
+    });
+    html+=`</details>`;
+  });
+  root.innerHTML=html;
 }
 
 function setSort(k){
@@ -387,7 +392,7 @@ function setSort(k){
     sortKey=k;
     sortDir=["name","region","district","type"].includes(k)?1:-1;
   }
-  drawTable();
+  renderTree();
 }
 
 renderHeader();
