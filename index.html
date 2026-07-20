@@ -31,12 +31,40 @@ const T={ru:{title:"ChatGPT Edu в школах и детских садах К�
 let LANG='ru',DATA=[],charts={},SEL=null;
 const fmt=n=>Number(n||0).toLocaleString(LANG==='kz'?'kk-KZ':'ru-RU'); const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); const norm=s=>String(s||'').trim().toLowerCase();
 function t(k){return T[LANG][k]||k} function num(s){const v=parseFloat(String(s??'').replace(/\s/g,'').replace(',','.').replace(/[^0-9.\-]/g,''));return isNaN(v)?0:v}
-function parseCSV(text){const rows=[];let row=[],cur='',q=false;for(let i=0;i<text.length;i++){const ch=text[i];if(q){if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch}else{if(ch==='"')q=true;else if(ch===','){row.push(cur);cur=''}else if(ch==='
-'){row.push(cur);rows.push(row);row=[];cur=''}else if(ch!=='')cur+=ch}}if(cur.length||row.length){row.push(cur);rows.push(row)}return rows}
+function parseCSV(text){
+  const rows=[];
+  let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(q){
+      if(ch==='"'){
+        if(text[i+1]==='"'){cur+='"';i++;}
+        else q=false;
+      }else cur+=ch;
+    }else{
+      if(ch==='"')q=true;
+      else if(ch===','){row.push(cur);cur='';}
+      else if(ch==='\n'){row.push(cur);rows.push(row);row=[];cur='';}
+      else if(ch!=='\r')cur+=ch;
+    }
+  }
+  if(cur.length||row.length){row.push(cur);rows.push(row);}
+  return rows;
+}
 function buildData(rows){if(!rows.length)return[];const h=rows[0].map(norm),find=w=>h.findIndex(x=>w.some(z=>x.includes(z)));const ir=find(['регион','область','өңір']),it=find(['тип','түр']),id=find(['район','аудан']),inm=find(['учреждение','наименование','организация','ұйым']),ii=find(['выдано лицензий','начали вводный','берілген лиценз']),ic=find(['завершили','аяқтады']),ia=find(['активировано','активировали','белсендір']),idt=find(['дата обновления','жаңарту']);return rows.slice(1).filter(r=>r.some(x=>String(x).trim())).map((r,i)=>{const issued=num(r[ii]),completed=num(r[ic]),activated=num(r[ia]);return{id:i+1,region:(r[ir]||'').trim(),type:(r[it]||'').trim(),district:(r[id]||'').trim(),name:(r[inm]||'').trim(),issued,completed,activated,rate:issued?activated/issued:0,date:idt>=0?(r[idt]||'').trim():''}}).filter(r=>r.region&&r.name)}
 function totals(rows){const x={count:rows.length,issued:0,completed:0,activated:0};rows.forEach(r=>{x.issued+=r.issued;x.completed+=r.completed;x.activated+=r.activated});x.rate=x.issued?x.activated/x.issued:0;return x}
 function statusColor(r){return r>=.5?'#1e9e63':r>=.25?'#b7a02c':r>=.1?'#e08a2e':'#d64545'}
-function timelineHTML(){const s=new Date(2026,2,30),e=new Date(2027,2,29),now=Date.now(),ep=Math.max(0,Math.min(100,(now-s)/(e-s)*100)),left=Math.max(0,Math.ceil((e-now)/86400000)),months=LANG==='kz'?['нау'26','сәу','мам','мау','шіл','там','қыр','қаз','қар','жел','қаң'27','ақп','нау'27']:['мар'26','апр','май','июн','июл','авг','сен','окт','ноя','дек','янв'27','фев','мар'27'];return `<div class="card timeline"><div class="tl-head"><h2>${t('timeline')}</h2><span class="tl-left">${t('left')} ${left} ${t('days')} · ${t('passed')} ${ep.toFixed(0)}%</span></div><div class="tl-track"><div class="tl-fill" style="width:${ep}%"></div><div class="tl-dot" style="left:${ep}%"></div></div><div class="tl-months">${months.map(m=>`<span>${m}</span>`).join('')}</div><div class="tl-dates"><div><b>30.03.2026</b><br>${t('start')}</div><div style="text-align:right"><b>29.03.2027</b><br>${t('end')}</div></div></div>`}
+function timelineHTML(){
+  const startDate=new Date(2026,2,30);
+  const endDate=new Date(2027,2,29);
+  const now=Date.now();
+  const ep=Math.max(0,Math.min(100,(now-startDate)/(endDate-startDate)*100));
+  const left=Math.max(0,Math.ceil((endDate-now)/86400000));
+  const months=LANG==='kz'
+    ? ["нау'26",'сәу','мам','мау','шіл','там','қыр','қаз','қар','жел',"қаң'27",'ақп',"нау'27"]
+    : ["мар'26",'апр','май','июн','июл','авг','сен','окт','ноя','дек',"янв'27",'фев',"мар'27"];
+  return `<div class="card timeline"><div class="tl-head"><h2>${t('timeline')}</h2><span class="tl-left">${t('left')} ${left} ${t('days')} · ${t('passed')} ${ep.toFixed(0)}%</span></div><div class="tl-track"><div class="tl-fill" style="width:${ep}%"></div><div class="tl-dot" style="left:${ep}%"></div></div><div class="tl-months">${months.map(m=>`<span>${m}</span>`).join('')}</div><div class="tl-dates"><div><b>30.03.2026</b><br>${t('start')}</div><div style="text-align:right"><b>29.03.2027</b><br>${t('end')}</div></div></div>`;
+}
 async function loadData(){document.getElementById('app').innerHTML=`<div class="loading">${t('loading')}</div>`;try{const r=await fetch(CSV_URL,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);DATA=buildData(parseCSV(await r.text()));if(!DATA.length)throw Error('Нет данных');render()}catch(e){document.getElementById('app').innerHTML=`<div class="card"><div class="err">Не удалось загрузить данные: ${esc(e.message)}</div></div>`}}
 function setLang(l){LANG=l;document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('active',b.dataset.l===l));document.documentElement.lang=l==='kz'?'kk':'ru';header();if(DATA.length)render()} function header(){document.getElementById('ttl').textContent=t('title');document.getElementById('sub').textContent=t('sub')}
 function drawChart(id,rows,color){if(charts[id])charts[id].destroy();charts[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:rows.map(r=>r.name.length>38?r.name.slice(0,36)+'…':r.name),datasets:[{data:rows.map(r=>+(r.rate*100).toFixed(1)),backgroundColor:color,borderRadius:4,barThickness:14}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+'%'}}},scales:{x:{min:0,max:100,ticks:{callback:v=>v+'%'}},y:{grid:{display:false}}}}})}
