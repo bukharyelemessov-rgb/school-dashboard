@@ -28,7 +28,7 @@
 <header class="top"><div><h1 id="ttl"></h1><p id="sub"></p></div><div class="actions"><button class="reload" onclick="loadData()">⟳</button><div class="lang"><button data-l="kz" onclick="setLang('kz')">ҚАЗ</button><button data-l="ru" class="active" onclick="setLang('ru')">РУС</button></div></div></header>
 <div id="app"><div class="loading">Загрузка данных…</div></div><div class="srcbar" id="src"></div></div>
 <script>
-const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSDrccbs1chrR8dXBjOc1eMA3vIKclVIHCjted-_itgYDFUA7QBvTzu76CV7TuUFaMXWikIxKJa37m9/pub?gid=1899398267&single=true&output=csv';
+const CSV_URL_BASE='https://docs.google.com/spreadsheets/d/14N58jO2lrWOyGMdZXz3UyCsSe_7XqkQUq8rAI4acKJ8/gviz/tq?tqx=out:csv&gid=1899398267';
 const REGION_TYPE_CSV_URL='https://docs.google.com/spreadsheets/d/14N58jO2lrWOyGMdZXz3UyCsSe_7XqkQUq8rAI4acKJ8/gviz/tq?tqx=out:csv&gid=976677714';
 const DISTRICT_CSV_URL='https://docs.google.com/spreadsheets/d/14N58jO2lrWOyGMdZXz3UyCsSe_7XqkQUq8rAI4acKJ8/gviz/tq?tqx=out:csv&gid=289165336';
 const T={ru:{title:"ChatGPT Edu в школах и детских садах Казахстана",sub:"Показатели активации лицензий по регионам, районам и учреждениям.",loading:"Загрузка данных…",inst:"Учреждений",issued:"Выдано лицензий",activated:"Активировано лицензий",coverage:"Общий охват активации",leaders:"Лидеры активации",leadersHint:"Топ-10 учреждений по проценту активации.",attention:"Требуют внимания",attentionHint:"10 учреждений с наименьшим процентом активации.",profile:"Профиль учреждения",profileHint:"Начните вводить название учреждения.",search:"Поиск учреждения…",nores:"Ничего не найдено",completed:"Завершили модуль",rate:"Процент активации",region:"Регион",district:"Район",type:"Тип",all:"Все области и учреждения",schools:"Школы",kindergartens:"Детсады",timeline:"Сроки проекта · 12 месяцев",start:"Запуск проекта",end:"Завершение проекта",left:"Осталось",days:"дн.",passed:"пройдено",updated:"Последнее обновление"},kz:{title:"ChatGPT Edu — Қазақстан мектептері мен балабақшаларында",sub:"Өңірлер, аудандар және ұйымдар бойынша лицензияларды белсендіру көрсеткіштері.",loading:"Деректер жүктелуде…",inst:"Ұйымдар",issued:"Берілген лицензиялар",activated:"Белсендірілген лицензиялар",coverage:"Жалпы белсендіру қамтуы",leaders:"Белсендіру көшбасшылары",leadersHint:"Белсендіру пайызы бойынша үздік 10 ұйым.",attention:"Назар аударуды қажет етеді",attentionHint:"Белсендіру пайызы ең төмен 10 ұйым.",profile:"Ұйым профилі",profileHint:"Ұйым атауын енгізіңіз.",search:"Ұйымды іздеу…",nores:"Ештеңе табылмады",completed:"Модульді аяқтады",rate:"Белсендіру пайызы",region:"Өңір",district:"Аудан",type:"Түрі",all:"Барлық өңірлер мен ұйымдар",schools:"Мектептер",kindergartens:"Балабақшалар",timeline:"Жоба мерзімі · 12 ай",start:"Жобаның басталуы",end:"Жобаның аяқталуы",left:"Қалды",days:"күн",passed:"өткен",updated:"Соңғы жаңарту"}};
@@ -262,29 +262,106 @@ function timelineHTML(){
     : ["мар'26",'апр','май','июн','июл','авг','сен','окт','ноя','дек',"янв'27",'фев',"мар'27"];
   return `<div class="card timeline"><div class="tl-head"><h2>${t('timeline')}</h2><span class="tl-left">${t('left')} ${left} ${t('days')} · ${t('passed')} ${ep.toFixed(0)}%</span></div><div class="tl-track"><div class="tl-fill" style="width:${ep}%"></div><div class="tl-dot" style="left:${ep}%"></div></div><div class="tl-months">${months.map(m=>`<span>${m}</span>`).join('')}</div><div class="tl-dates"><div><b>30.03.2026</b><br>${t('start')}</div><div style="text-align:right"><b>29.03.2027</b><br>${t('end')}</div></div></div>`;
 }
+
+async function fetchInstitutionRows(){
+  const pageSize=1000;
+  let offset=0;
+  let allRows=[];
+  let header=null;
+  let previousFirstRow='';
+
+  while(true){
+    const tq=encodeURIComponent(`select * limit ${pageSize} offset ${offset}`);
+    const url=`${CSV_URL_BASE}&tq=${tq}`;
+    const response=await fetch(url,{cache:'no-store'});
+
+    if(!response.ok){
+      throw new Error(`Не удалось загрузить учреждения: HTTP ${response.status}`);
+    }
+
+    const pageRows=parseCSV(await response.text());
+
+    if(!pageRows.length){
+      break;
+    }
+
+    if(!header){
+      header=pageRows[0];
+      allRows.push(header);
+    }
+
+    const dataRows=pageRows.slice(1).filter(row=>
+      row.some(cell=>String(cell||'').trim())
+    );
+
+    if(!dataRows.length){
+      break;
+    }
+
+    const firstRowSignature=JSON.stringify(dataRows[0]);
+
+    if(firstRowSignature===previousFirstRow){
+      throw new Error('Google Sheets повторяет одну и ту же страницу данных');
+    }
+
+    previousFirstRow=firstRowSignature;
+    allRows.push(...dataRows);
+
+    /*
+     * В CSV Google иногда включает строку заголовков
+     * в лимит 1000. Поэтому на странице может быть 999
+     * строк данных. Нельзя завершать загрузку только потому,
+     * что строк меньше pageSize.
+     */
+    offset+=dataRows.length;
+
+    if(offset>50000){
+      throw new Error('Слишком много строк на листе «Учреждения»');
+    }
+  }
+
+  return allRows;
+}
+
 async function loadData(){
   document.getElementById('app').innerHTML=`<div class="loading">${t('loading')}</div>`;
 
   try{
-    const responses=await Promise.all([
-      fetch(CSV_URL,{cache:'no-store'}),
+    const institutionRowsPromise=fetchInstitutionRows();
+
+    const aggregateResponsesPromise=Promise.all([
       fetch(REGION_TYPE_CSV_URL,{cache:'no-store'}),
       fetch(DISTRICT_CSV_URL,{cache:'no-store'})
     ]);
 
-    for(const response of responses){
-      if(!response.ok)throw Error('HTTP '+response.status);
+    const [institutionRows,aggregateResponses]=await Promise.all([
+      institutionRowsPromise,
+      aggregateResponsesPromise
+    ]);
+
+    for(const response of aggregateResponses){
+      if(!response.ok){
+        throw new Error(`Не удалось загрузить сводные данные: HTTP ${response.status}`);
+      }
     }
 
-    const texts=await Promise.all(responses.map(response=>response.text()));
+    const aggregateTexts=await Promise.all(
+      aggregateResponses.map(response=>response.text())
+    );
 
-    DATA=buildData(parseCSV(texts[0]));
-    REGION_TYPE_DATA=buildAggregateData(parseCSV(texts[1]),'region');
-    DISTRICT_DATA=buildAggregateData(parseCSV(texts[2]),'district');
+    DATA=buildData(institutionRows);
+    REGION_TYPE_DATA=buildAggregateData(
+      parseCSV(aggregateTexts[0]),
+      'region'
+    );
+    DISTRICT_DATA=buildAggregateData(
+      parseCSV(aggregateTexts[1]),
+      'district'
+    );
 
-    if(!DATA.length)throw Error('Нет данных по учреждениям');
-    if(!REGION_TYPE_DATA.length)throw Error('Нет данных на листе «Регион_Тип»');
-    if(!DISTRICT_DATA.length)throw Error('Нет данных на листе «Районы»');
+    if(!DATA.length)throw new Error('Нет данных по учреждениям');
+    if(!REGION_TYPE_DATA.length)throw new Error('Нет данных на листе «Регион_Тип»');
+    if(!DISTRICT_DATA.length)throw new Error('Нет данных на листе «Районы»');
 
     render();
   }catch(e){
