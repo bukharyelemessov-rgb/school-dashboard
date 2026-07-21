@@ -29,8 +29,10 @@
 <div id="app"><div class="loading">Загрузка данных…</div></div><div class="srcbar" id="src"></div></div>
 <script>
 const CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSDrccbs1chrR8dXBjOc1eMA3vIKclVIHCjted-_itgYDFUA7QBvTzu76CV7TuUFaMXWikIxKJa37m9/pub?gid=1899398267&single=true&output=csv';
+const REGION_TYPE_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSDrccbs1chrR8dXBjOc1eMA3vIKclVIHCjted-_itgYDFUA7QBvTzu76CV7TuUFaMXWikIxKJa37m9/pub?gid=976677714&single=true&output=csv';
+const DISTRICT_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSDrccbs1chrR8dXBjOc1eMA3vIKclVIHCjted-_itgYDFUA7QBvTzu76CV7TuUFaMXWikIxKJa37m9/pub?gid=289165336&single=true&output=csv';
 const T={ru:{title:"ChatGPT Edu в школах и детских садах Казахстана",sub:"Показатели активации лицензий по регионам, районам и учреждениям.",loading:"Загрузка данных…",inst:"Учреждений",issued:"Выдано лицензий",activated:"Активировано лицензий",coverage:"Общий охват активации",leaders:"Лидеры активации",leadersHint:"Топ-10 учреждений по проценту активации.",attention:"Требуют внимания",attentionHint:"10 учреждений с наименьшим процентом активации.",profile:"Профиль учреждения",profileHint:"Начните вводить название учреждения.",search:"Поиск учреждения…",nores:"Ничего не найдено",completed:"Завершили модуль",rate:"Процент активации",region:"Регион",district:"Район",type:"Тип",all:"Все области и учреждения",schools:"Школы",kindergartens:"Детсады",timeline:"Сроки проекта · 12 месяцев",start:"Запуск проекта",end:"Завершение проекта",left:"Осталось",days:"дн.",passed:"пройдено",updated:"Последнее обновление"},kz:{title:"ChatGPT Edu — Қазақстан мектептері мен балабақшаларында",sub:"Өңірлер, аудандар және ұйымдар бойынша лицензияларды белсендіру көрсеткіштері.",loading:"Деректер жүктелуде…",inst:"Ұйымдар",issued:"Берілген лицензиялар",activated:"Белсендірілген лицензиялар",coverage:"Жалпы белсендіру қамтуы",leaders:"Белсендіру көшбасшылары",leadersHint:"Белсендіру пайызы бойынша үздік 10 ұйым.",attention:"Назар аударуды қажет етеді",attentionHint:"Белсендіру пайызы ең төмен 10 ұйым.",profile:"Ұйым профилі",profileHint:"Ұйым атауын енгізіңіз.",search:"Ұйымды іздеу…",nores:"Ештеңе табылмады",completed:"Модульді аяқтады",rate:"Белсендіру пайызы",region:"Өңір",district:"Аудан",type:"Түрі",all:"Барлық өңірлер мен ұйымдар",schools:"Мектептер",kindergartens:"Балабақшалар",timeline:"Жоба мерзімі · 12 ай",start:"Жобаның басталуы",end:"Жобаның аяқталуы",left:"Қалды",days:"күн",passed:"өткен",updated:"Соңғы жаңарту"}};
-let LANG='ru',DATA=[],charts={},SEL=null;
+let LANG='ru',DATA=[],REGION_TYPE_DATA=[],DISTRICT_DATA=[],charts={},SEL=null;
 const fmt=n=>Number(n||0).toLocaleString(LANG==='kz'?'kk-KZ':'ru-RU'); const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); const norm=s=>String(s||'').trim().toLowerCase();
 function t(k){return T[LANG][k]||k} function num(s){const v=parseFloat(String(s??'').replace(/\s/g,'').replace(',','.').replace(/[^0-9.\-]/g,''));return isNaN(v)?0:v}
 function parseCSV(text){
@@ -133,6 +135,120 @@ function buildData(rows){
     })
     .filter(r=>r.region&&r.name);
 }
+
+function findHeaderIndex(headers,exactNames,containsNames=[]){
+  for(const name of exactNames){
+    const index=headers.indexOf(norm(name));
+    if(index>=0)return index;
+  }
+  return headers.findIndex(h=>containsNames.some(part=>h.includes(norm(part))));
+}
+
+function buildAggregateData(rows,level){
+  if(!rows.length)return[];
+
+  const h=rows[0].map(norm);
+  const ir=findHeaderIndex(h,['регион','өңір'],['регион','область','өңір']);
+  const it=findHeaderIndex(h,['тип','түр','түрі'],['тип','түр']);
+  const id=level==='district'
+    ? findHeaderIndex(h,['район','аудан'],['район','аудан'])
+    : -1;
+
+  const ii=findHeaderIndex(
+    h,
+    ['выдано лицензий','начали вводный модуль'],
+    ['выдано лицензий','начали вводный']
+  );
+
+  const ia=findHeaderIndex(
+    h,
+    ['активировано лицензий','активировали лицензию','активировали лицензии'],
+    ['активировано лиценз','активировали лиценз']
+  );
+
+  if(ir<0||it<0||ii<0||ia<0){
+    throw new Error(
+      level==='district'
+        ? 'Не распознаны колонки на листе «Районы»'
+        : 'Не распознаны колонки на листе «Регион_Тип»'
+    );
+  }
+
+  return rows.slice(1)
+    .filter(r=>r.some(x=>String(x).trim()))
+    .map(r=>{
+      const issued=num(r[ii]);
+      const activated=num(r[ia]);
+
+      return{
+        region:String(r[ir]||'').trim(),
+        type:String(r[it]||'').trim(),
+        district:id>=0?String(r[id]||'').trim():'',
+        issued,
+        activated,
+        rate:issued?activated/issued:0
+      };
+    })
+    .filter(r=>r.region);
+}
+
+function typeKey(value){
+  const valueNorm=norm(value);
+  if(valueNorm.includes('школ')||valueNorm.includes('мектеп'))return 'school';
+  if(valueNorm.includes('детсад')||valueNorm.includes('балабақ'))return 'kindergarten';
+  return valueNorm;
+}
+
+function aggregateTotals(rows){
+  const result={count:0,issued:0,activated:0,rate:0};
+  rows.forEach(r=>{
+    result.issued+=num(r.issued);
+    result.activated+=num(r.activated);
+  });
+  result.rate=result.issued?result.activated/result.issued:0;
+  return result;
+}
+
+function regionOfficialTotals(region){
+  const rows=REGION_TYPE_DATA.filter(r=>norm(r.region)===norm(region));
+  return rows.length?aggregateTotals(rows):totals(DATA.filter(r=>r.region===region));
+}
+
+function regionTypeOfficialTotals(region,type){
+  const key=typeKey(type);
+  const rows=REGION_TYPE_DATA.filter(r=>
+    norm(r.region)===norm(region)&&typeKey(r.type)===key
+  );
+  return rows.length?aggregateTotals(rows):totals(
+    DATA.filter(r=>r.region===region&&typeKey(r.type)===key)
+  );
+}
+
+function districtOfficialTotals(region,district){
+  const rows=DISTRICT_DATA.filter(r=>
+    norm(r.region)===norm(region)&&norm(r.district)===norm(district)
+  );
+  return rows.length?aggregateTotals(rows):totals(
+    DATA.filter(r=>r.region===region&&r.district===district)
+  );
+}
+
+function districtTypeOfficialTotals(region,district,type){
+  const key=typeKey(type);
+  const rows=DISTRICT_DATA.filter(r=>
+    norm(r.region)===norm(region)&&
+    norm(r.district)===norm(district)&&
+    typeKey(r.type)===key
+  );
+  return rows.length?aggregateTotals(rows):totals(
+    DATA.filter(r=>
+      r.region===region&&
+      r.district===district&&
+      typeKey(r.type)===key
+    )
+  );
+}
+
 function totals(rows){const x={count:rows.length,issued:0,completed:0,activated:0};rows.forEach(r=>{x.issued+=r.issued;x.completed+=r.completed;x.activated+=r.activated});x.rate=x.issued?x.activated/x.issued:0;return x}
 function statusColor(r){return r>=.5?'#1e9e63':r>=.25?'#b7a02c':r>=.1?'#e08a2e':'#d64545'}
 function timelineHTML(){
@@ -146,7 +262,36 @@ function timelineHTML(){
     : ["мар'26",'апр','май','июн','июл','авг','сен','окт','ноя','дек',"янв'27",'фев',"мар'27"];
   return `<div class="card timeline"><div class="tl-head"><h2>${t('timeline')}</h2><span class="tl-left">${t('left')} ${left} ${t('days')} · ${t('passed')} ${ep.toFixed(0)}%</span></div><div class="tl-track"><div class="tl-fill" style="width:${ep}%"></div><div class="tl-dot" style="left:${ep}%"></div></div><div class="tl-months">${months.map(m=>`<span>${m}</span>`).join('')}</div><div class="tl-dates"><div><b>30.03.2026</b><br>${t('start')}</div><div style="text-align:right"><b>29.03.2027</b><br>${t('end')}</div></div></div>`;
 }
-async function loadData(){document.getElementById('app').innerHTML=`<div class="loading">${t('loading')}</div>`;try{const r=await fetch(CSV_URL,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);DATA=buildData(parseCSV(await r.text()));if(!DATA.length)throw Error('Нет данных');render()}catch(e){document.getElementById('app').innerHTML=`<div class="card"><div class="err">Не удалось загрузить данные: ${esc(e.message)}</div></div>`}}
+async function loadData(){
+  document.getElementById('app').innerHTML=`<div class="loading">${t('loading')}</div>`;
+
+  try{
+    const responses=await Promise.all([
+      fetch(CSV_URL,{cache:'no-store'}),
+      fetch(REGION_TYPE_CSV_URL,{cache:'no-store'}),
+      fetch(DISTRICT_CSV_URL,{cache:'no-store'})
+    ]);
+
+    for(const response of responses){
+      if(!response.ok)throw Error('HTTP '+response.status);
+    }
+
+    const texts=await Promise.all(responses.map(response=>response.text()));
+
+    DATA=buildData(parseCSV(texts[0]));
+    REGION_TYPE_DATA=buildAggregateData(parseCSV(texts[1]),'region');
+    DISTRICT_DATA=buildAggregateData(parseCSV(texts[2]),'district');
+
+    if(!DATA.length)throw Error('Нет данных по учреждениям');
+    if(!REGION_TYPE_DATA.length)throw Error('Нет данных на листе «Регион_Тип»');
+    if(!DISTRICT_DATA.length)throw Error('Нет данных на листе «Районы»');
+
+    render();
+  }catch(e){
+    document.getElementById('app').innerHTML=
+      `<div class="card"><div class="err">Не удалось загрузить данные: ${esc(e.message)}</div></div>`;
+  }
+}
 function setLang(l){LANG=l;document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('active',b.dataset.l===l));document.documentElement.lang=l==='kz'?'kk':'ru';header();if(DATA.length)render()} function header(){document.getElementById('ttl').textContent=t('title');document.getElementById('sub').textContent=t('sub')}
 function drawChart(id,rows,color){if(charts[id])charts[id].destroy();charts[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:rows.map(r=>r.name.length>38?r.name.slice(0,36)+'…':r.name),datasets:[{data:rows.map(r=>+(r.rate*100).toFixed(1)),backgroundColor:color,borderRadius:4,barThickness:14}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+'%'}}},scales:{x:{min:0,max:100,ticks:{callback:v=>v+'%'}},y:{grid:{display:false}}}}})}
 function profileHTML(){return `<div class="card"><h2>${t('profile')}</h2><p class="hint">${t('profileHint')}</p><div class="combo"><input id="spotSearch" placeholder="${t('search')}" oninput="comboFilter()" onfocus="comboFilter()"><div id="comboList" class="combolist" hidden></div></div><div id="spotOut"></div></div>`}
@@ -154,14 +299,19 @@ function comboFilter(){const q=norm(document.getElementById('spotSearch').value)
 function drawSpot(id){const r=DATA.find(x=>x.id===id)||DATA[0];SEL=r.id;const s=document.getElementById('spotSearch');if(s)s.value=r.name;document.getElementById('spotOut').innerHTML=`<div class="spot"><div class="spotcard s1"><div class="n">${fmt(r.issued)}</div><div class="t">${t('issued')}</div></div><div class="spotcard s2"><div class="n">${fmt(r.completed)}</div><div class="t">${t('completed')}</div></div><div class="spotcard s3"><div class="n">${fmt(r.activated)}</div><div class="t">${t('activated')}</div></div><div class="spotcard" style="background:${statusColor(r.rate)}"><div class="n">${(r.rate*100).toFixed(1)}%</div><div class="t">${t('rate')}</div></div></div><div class="hbars"><div class="hbar"><span class="l">${t('issued')}</span><div class="track"><div class="fill" style="width:100%;background:var(--navy)"></div></div><span class="v">${fmt(r.issued)} · 100%</span></div><div class="hbar"><span class="l">${t('completed')}</span><div class="track"><div class="fill" style="width:${Math.min(100,r.issued?r.completed/r.issued*100:0)}%;background:var(--accent)"></div></div><span class="v">${fmt(r.completed)}</span></div><div class="hbar"><span class="l">${t('activated')}</span><div class="track"><div class="fill" style="width:${Math.min(100,r.rate*100)}%;background:${statusColor(r.rate)}"></div></div><span class="v">${fmt(r.activated)} · ${(r.rate*100).toFixed(1)}%</span></div></div><p class="hint" style="margin-top:14px"><b>${esc(r.region)}</b> · ${esc(r.district)} · ${esc(r.type)}</p>`}
 function treeHTML(){
   const regions=[...new Set(DATA.map(r=>r.region))].sort((a,b)=>a.localeCompare(b,'ru'));
+
   return `<div class="card">
     <h2>${t('all')}</h2>
     <p class="hint">${t('region')} → ${t('district')} → ${t('type')} → ${t('inst')}</p>
     <div class="tree">
       ${regions.map(region=>{
         const rr=DATA.filter(r=>r.region===region);
-        const rt=totals(rr);
-        const districts=[...new Set(rr.map(r=>r.district))].sort((a,b)=>a.localeCompare(b,'ru'));
+        const rt=regionOfficialTotals(region);
+        rt.count=rr.length;
+
+        const districts=[...new Set(rr.map(r=>r.district))]
+          .filter(Boolean)
+          .sort((a,b)=>a.localeCompare(b,'ru'));
 
         return `<details>
           <summary>
@@ -176,7 +326,8 @@ function treeHTML(){
 
           ${districts.map(d=>{
             const dr=rr.filter(r=>r.district===d);
-            const dt=totals(dr);
+            const dt=districtOfficialTotals(region,d);
+            dt.count=dr.length;
 
             return `<details>
               <summary>
@@ -190,16 +341,18 @@ function treeHTML(){
               </summary>
 
               ${['школы','детсады'].map(tp=>{
-                const rows=dr.filter(r=>norm(r.type).includes(tp==='школы'?'школ':'детсад'));
+                const key=tp==='школы'?'school':'kindergarten';
+                const rows=dr.filter(r=>typeKey(r.type)===key);
                 if(!rows.length)return'';
 
-                const tt=totals(rows);
+                const tt=districtTypeOfficialTotals(region,d,tp);
+                tt.count=rows.length;
 
                 return `<details class="type-block">
                   <summary>
                     ${tp==='школы'?t('schools'):t('kindergartens')}
                     <span class="meta">
-                      <span><b>${rows.length}</b> ${t('inst').toLowerCase()}</span>
+                      <span><b>${fmt(tt.count)}</b> ${t('inst').toLowerCase()}</span>
                       <span>${t('issued')}: <b>${fmt(tt.issued)}</b></span>
                       <span>${t('activated')}: <b>${fmt(tt.activated)}</b></span>
                       <span>${t('rate')}: <b style="color:${statusColor(tt.rate)}">${(tt.rate*100).toFixed(1)}%</b></span>
@@ -236,6 +389,6 @@ function treeHTML(){
     </div>
   </div>`;
 }
-function render(){header();const nat=totals(DATA),sorted=DATA.slice().sort((a,b)=>b.rate-a.rate),top=sorted.slice(0,10),low=sorted.slice(-10).reverse();document.getElementById('app').innerHTML=`${timelineHTML()}<div class="kpis"><div class="kpi" style="border-top-color:var(--navy)"><div class="val">${fmt(nat.count)}</div><div class="lab">${t('inst')}</div></div><div class="kpi"><div class="val">${fmt(nat.issued)}</div><div class="lab">${t('issued')}</div></div><div class="kpi" style="border-top-color:var(--good)"><div class="val">${fmt(nat.activated)}</div><div class="lab">${t('activated')}</div></div><div class="kpi" style="border-top-color:${statusColor(nat.rate)}"><div class="val" style="color:${statusColor(nat.rate)}">${(nat.rate*100).toFixed(2)}%</div><div class="lab">${t('coverage')}</div><div class="sub">${t('activated')} ÷ ${t('issued').toLowerCase()}</div></div></div><div class="grid2"><div class="card"><h2>${t('leaders')}</h2><p class="hint">${t('leadersHint')}</p><div class="chartbox"><canvas id="topChart"></canvas></div></div><div class="card"><h2>${t('attention')}</h2><p class="hint">${t('attentionHint')}</p><div class="chartbox"><canvas id="lowChart"></canvas></div></div></div>${profileHTML()}${treeHTML()}`;drawChart('topChart',top,'#1e9e63');drawChart('lowChart',low,'#d64545');drawSpot(SEL||DATA[0].id);document.getElementById('src').textContent=`${t('updated')}: ${DATA.find(x=>x.date)?.date||new Date().toLocaleString()}`}
+function render(){header();const nat=aggregateTotals(REGION_TYPE_DATA);nat.count=DATA.length;const sorted=DATA.slice().sort((a,b)=>b.rate-a.rate),top=sorted.slice(0,10),low=sorted.slice(-10).reverse();document.getElementById('app').innerHTML=`${timelineHTML()}<div class="kpis"><div class="kpi" style="border-top-color:var(--navy)"><div class="val">${fmt(nat.count)}</div><div class="lab">${t('inst')}</div></div><div class="kpi"><div class="val">${fmt(nat.issued)}</div><div class="lab">${t('issued')}</div></div><div class="kpi" style="border-top-color:var(--good)"><div class="val">${fmt(nat.activated)}</div><div class="lab">${t('activated')}</div></div><div class="kpi" style="border-top-color:${statusColor(nat.rate)}"><div class="val" style="color:${statusColor(nat.rate)}">${(nat.rate*100).toFixed(2)}%</div><div class="lab">${t('coverage')}</div><div class="sub">${t('activated')} ÷ ${t('issued').toLowerCase()}</div></div></div><div class="grid2"><div class="card"><h2>${t('leaders')}</h2><p class="hint">${t('leadersHint')}</p><div class="chartbox"><canvas id="topChart"></canvas></div></div><div class="card"><h2>${t('attention')}</h2><p class="hint">${t('attentionHint')}</p><div class="chartbox"><canvas id="lowChart"></canvas></div></div></div>${profileHTML()}${treeHTML()}`;drawChart('topChart',top,'#1e9e63');drawChart('lowChart',low,'#d64545');drawSpot(SEL||DATA[0].id);document.getElementById('src').textContent=`${t('updated')}: ${DATA.find(x=>x.date)?.date||new Date().toLocaleString()}`}
 document.addEventListener('click',e=>{const c=document.querySelector('.combo');if(c&&!c.contains(e.target)){const l=document.getElementById('comboList');if(l)l.hidden=true}});header();loadData();
 </script></body></html>
